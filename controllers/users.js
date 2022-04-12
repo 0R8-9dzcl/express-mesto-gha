@@ -1,5 +1,3 @@
-/* eslint-disable quotes */
-/* eslint-disable quote-props */
 const { NODE_ENV, JWT_SECRET } = process.env;
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -25,22 +23,19 @@ module.exports.createUser = (req, res, next) => {
       avatar,
     })
       .then((user) => {
-        if (!user) {
-          // ошибка 'Переданы некорректные данные при создании пользователя'
-        }
         res.status(201).send({
           data: {
-            name,
-            about,
-            avatar,
-            email,
+            email: user.email,
+            name: user.name,
+            about: user.about,
+            avatar: user.avatar,
           },
         });
       })
     // данные не записались, вернём ошибку
       .catch((err) => {
         if (err.name === 'ValidationError') next(new BadReqError('Переданы некорректные данные при создании пользователя'));
-        if (err.name === 'MongoServerError') next(new ConflictError('Пользователь с таким адресом электроной почты уже зарегистрирован!'));
+        if (err.code === 11000) next(new ConflictError('Пользователь с таким адресом электроной почты уже зарегистрирован!'));
         next(err);
       }));
 };
@@ -59,7 +54,16 @@ module.exports.login = (req, res, next) => {
         maxAge: 3600000 * 24 * 7,
         httpOnly: true,
       })
-        .send(user);
+        .status(200)
+        .send({
+          data: {
+            _id: user._id,
+            email: user.email,
+            name: user.name,
+            about: user.about,
+            avatar: user.avatar,
+          },
+        });
     })
     .catch(next);
 };
